@@ -99,7 +99,7 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
 
             unsafe {
                 /* perform the write */
-                ptr::write(x.cast::<$T>(), ptr::read_unaligned(y.cast::<$T>()));
+                ptr::write(x as *mut $T, ptr::read_unaligned(y as *mut $T));
 
                 /* inc the ptrs */
                 x = x.add(ZOF);
