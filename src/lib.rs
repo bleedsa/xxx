@@ -1,6 +1,7 @@
 #![feature(likely_unlikely)]
 #![feature(repr_simd)]
 #![feature(pointer_is_aligned_to)]
+#![feature(core_intrinsics)]
 #![allow(internal_features)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
@@ -161,20 +162,6 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
     /* skip u32&u16, just copy the rest of the bytes one by one. */
     while unlikely(Z >= 1) {
         W!(u8);
-        /*
-        /* size of $T */
-        unsafe {
-            /* perform the write */
-            ptr::write_unaligned(x, ptr::read_unaligned(y));
-
-            /* inc the ptrs */
-            x = x.add(1);
-            y = y.add(1);
-        }
-
-        /* adjust the size */
-        Z -= 1;
-        */
     }
 }
 
