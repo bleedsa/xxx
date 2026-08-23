@@ -111,23 +111,23 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
     }
 
     /* idfk what this does. thanks barrow! */
-    if Z >= 1 && !y.is_aligned_to(2) {
+    if likely(Z >= 1) && !y.is_aligned_to(2) {
         W!(x, y, u8);
     }
 
-    if Z >= 2 && !y.is_aligned_to(4) {
+    if likely(Z >= 2) && !y.is_aligned_to(4) {
         W!(x, y, u16);
     }
 
-    if Z >= 4 && !y.is_aligned_to(8) {
+    if likely(Z >= 4) && !y.is_aligned_to(8) {
         W!(x, y, u32);
     }
 
-    if Z >= 8 && !y.is_aligned_to(16) {
+    if likely(Z >= 8) && !y.is_aligned_to(16) {
         W!(x, y, u64);
     }
 
-    if Z >= 16 && !y.is_aligned_to(32) {
+    if likely(Z >= 16) && !y.is_aligned_to(32) {
         W!(x, y, xmm_t);
     }
 
