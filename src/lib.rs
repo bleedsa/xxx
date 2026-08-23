@@ -92,17 +92,17 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
 
     /* copy a pointer $x<-$y with a size ($T) */
     macro_rules! W {
-        ($x:expr, $y:expr, $T:ty) => {{
+        ($T:ty) => {{
             /* size of $T */
             const ZOF: usize = size_of::<$T>();
 
             unsafe {
                 /* perform the write */
-                ptr::write(x.cast::<X>(), ptr::read_unaligned(y.cast::<X>()));
+                ptr::write(x.cast::<$T>(), ptr::read_unaligned(y.cast::<$T>()));
 
                 /* inc the ptrs */
-                $x = $x.add(ZOF);
-                $y = $y.add(ZOF);
+                x = x.add(ZOF);
+                y = y.add(ZOF);
             }
 
             /* adjust the size */
@@ -112,55 +112,69 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
 
     /* idfk what this does. thanks barrow! */
     if likely(Z >= 1) && !x.is_aligned_to(2) {
-        W!(x, y, u8);
+        W!(u8);
     }
 
     if likely(Z >= 2) && !x.is_aligned_to(4) {
-        W!(x, y, u16);
+        W!(u16);
     }
 
     if likely(Z >= 4) && !x.is_aligned_to(8) {
-        W!(x, y, u32);
+        W!(u32);
     }
 
     if likely(Z >= 8) && !x.is_aligned_to(16) {
-        W!(x, y, u64);
+        W!(u64);
     }
 
     if likely(Z >= 16) && !x.is_aligned_to(32) {
-        W!(x, y, xmm_t);
+        W!(xmm_t);
     }
 
     /* if we have a shit ton of bytes, we perform a bunch of writes in a row.
      * takes less iters. */
     while likely(Z >= 128) {
-        W!(x, y, ymm_t);
-        W!(x, y, ymm_t);
-        W!(x, y, ymm_t);
-        W!(x, y, ymm_t);
+        W!(ymm_t);
+        W!(ymm_t);
+        W!(ymm_t);
+        W!(ymm_t);
     }
 
     if Z >= 64 {
-        W!(x, y, ymm_t);
-        W!(x, y, ymm_t);
+        W!(ymm_t);
+        W!(ymm_t);
     }
 
     /* now we start doing regular reg writes */
     if Z >= 32 {
-        W!(x, y, ymm_t);
+        W!(ymm_t);
     }
 
     if Z >= 16 {
-        W!(x, y, xmm_t);
+        W!(xmm_t);
     }
 
     if Z >= 8 {
-        W!(x, y, u64);
+        W!(u64);
     }
 
     /* skip u32&u16, just copy the rest of the bytes one by one. */
     while unlikely(Z >= 1) {
-        W!(x, y, u8);
+        W!(u8);
+        /*
+        /* size of $T */
+        unsafe {
+            /* perform the write */
+            ptr::write_unaligned(x, ptr::read_unaligned(y));
+
+            /* inc the ptrs */
+            x = x.add(1);
+            y = y.add(1);
+        }
+
+        /* adjust the size */
+        Z -= 1;
+        */
     }
 }
 
