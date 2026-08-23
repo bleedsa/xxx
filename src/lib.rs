@@ -33,9 +33,9 @@ pub unsafe fn new<X>(Z: usize) -> R<*mut X> {
     }
 
     /* create an array */
-    let lay = Layout::from_size_align(size_of::<X>() * Z, align_of::<X>())
+    let lay = Layout::from_size_align(Z * size_of::<X>(), align_of::<X>())
         .map_err(|e| format!("{e}"))?;
-    let ptr = unsafe { alloc::alloc(lay) as *mut X };
+    let ptr = unsafe { alloc::alloc_zeroed(lay) as *mut X };
 
     /* check for oom */
     if unlikely(ptr as *const X == ptr::null()) {
@@ -98,7 +98,7 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
 
             unsafe {
                 /* perform the write */
-                ptr::write(x as *mut X, ptr::read_unaligned(y as *mut X));
+                ptr::write(x.cast::<X>(), ptr::read_unaligned(y.cast::<X>()));
 
                 /* inc the ptrs */
                 $x = $x.add(ZOF);
@@ -111,55 +111,55 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
     }
 
     /* idfk what this does. thanks barrow! */
-    if likely(Z >= 1) && !y.is_aligned_to(2) {
+    if likely(Z >= 1) && !x.is_aligned_to(2) {
         W!(x, y, u8);
     }
 
-    if likely(Z >= 2) && !y.is_aligned_to(4) {
+    if likely(Z >= 2) && !x.is_aligned_to(4) {
         W!(x, y, u16);
     }
 
-    if likely(Z >= 4) && !y.is_aligned_to(8) {
+    if likely(Z >= 4) && !x.is_aligned_to(8) {
         W!(x, y, u32);
     }
 
-    if likely(Z >= 8) && !y.is_aligned_to(16) {
+    if likely(Z >= 8) && !x.is_aligned_to(16) {
         W!(x, y, u64);
     }
 
-    if likely(Z >= 16) && !y.is_aligned_to(32) {
+    if likely(Z >= 16) && !x.is_aligned_to(32) {
         W!(x, y, xmm_t);
     }
 
     /* if we have a shit ton of bytes, we perform a bunch of writes in a row.
      * takes less iters. */
-    while Z >= 128 {
+    while likely(Z >= 128) {
         W!(x, y, ymm_t);
         W!(x, y, ymm_t);
         W!(x, y, ymm_t);
         W!(x, y, ymm_t);
     }
 
-    while Z >= 64 {
+    if Z >= 64 {
         W!(x, y, ymm_t);
         W!(x, y, ymm_t);
     }
 
     /* now we start doing regular reg writes */
-    while Z >= 32 {
+    if Z >= 32 {
         W!(x, y, ymm_t);
     }
 
-    while Z >= 16 {
+    if Z >= 16 {
         W!(x, y, xmm_t);
     }
 
-    while Z >= 8 {
+    if Z >= 8 {
         W!(x, y, u64);
     }
 
     /* skip u32&u16, just copy the rest of the bytes one by one. */
-    while Z >= 1 {
+    while unlikely(Z >= 1) {
         W!(x, y, u8);
     }
 }
