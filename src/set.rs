@@ -58,7 +58,12 @@ pub unsafe fn set<X>(x: *mut X, b: u8, Z: usize) {
         W!(xmm_t=>bxmm);
     }
 
-    while Z >= 32 {
+    while Z >= 64 {
+        W!(ymm_t=>bymm);
+        W!(ymm_t=>bymm);
+    }
+
+    if Z >= 32 {
         W!(ymm_t=>bymm);
     }
 

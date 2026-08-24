@@ -6,7 +6,12 @@ edition = "2024"
 
 [dev-dependencies]
 criterion = { version = "0.8", features = [] }
+libc = "*"
 
 [[bench]]
 name = "cpy"
+harness = false
+
+[[bench]]
+name = "set"
 harness = false
