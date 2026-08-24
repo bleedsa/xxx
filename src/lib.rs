@@ -335,6 +335,27 @@ fn Cpy_16_4() {
 }
 
 #[test]
+fn Cpy_padded_mem() {
+    unsafe {
+        let x = new(3).unwrap();
+        let y = new(3).unwrap();
+
+        *x = (None, Some(0u32));
+        *x.add(1) = (Some(1u8), None);
+        *x.add(2) = (Some(2), Some(2));
+
+        cpy(y, x, 3);
+
+        assert_eq!(*x, *y);
+        assert_eq!(*x.add(1), *y.add(1));
+        assert_eq!(*x.add(2), *y.add(2));
+
+        free(x, 3);
+        free(y, 3);
+    }
+}
+
+#[test]
 fn Cpy_struct_repr_c() {
     #[repr(C)]
     #[derive(Copy, Clone, PartialEq, Debug)]
