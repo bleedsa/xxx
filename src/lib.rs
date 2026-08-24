@@ -8,7 +8,7 @@
 use std::{
     alloc::{self, Layout},
     hint::{likely, unlikely},
-    mem::{align_of, size_of},
+    mem::{align_of, size_of, MaybeUninit},
     ptr,
 };
 
@@ -94,7 +94,7 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
 
             unsafe {
                 /* perform the write */
-                ptr::write(x as *mut $T, ptr::read_unaligned(y as *mut $T));
+                ptr::write(x.cast::<MaybeUninit<$T>>(), ptr::read_unaligned(y.cast::<MaybeUninit<$T>>()));
 
                 /* inc the ptrs */
                 x = x.add(ZOF);
