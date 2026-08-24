@@ -1,0 +1,9 @@
+XXX
+
+	Pretty fast memory library in rust.
+
+BUILDING
+
+	% cargo build
+	% cargo test
+	% cargo bench
