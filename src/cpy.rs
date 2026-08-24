@@ -6,7 +6,7 @@ use std::{
 };
 
 #[cfg(test)]
-use crate::{new, free};
+use crate::{free, new};
 
 /**
  * `memcpy(dst(x), src(y), size(Z));`

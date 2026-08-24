@@ -12,8 +12,9 @@ use std::{
 };
 
 pub mod cpy;
+pub mod set;
 
-pub use crate::cpy::*;
+pub use crate::{cpy::*, set::*};
 
 pub(crate) type R<X> = Result<X, String>;
 
