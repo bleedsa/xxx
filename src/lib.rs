@@ -8,20 +8,23 @@
 use std::{
     alloc::{self, Layout},
     hint::{likely, unlikely},
-    mem::{align_of, size_of, MaybeUninit},
+    mem::{MaybeUninit, align_of, size_of},
     ptr,
 };
 
 pub type R<X> = Result<X, String>;
 
+/** xmm register repr */
 #[repr(simd)]
 #[derive(Copy, Clone)]
 struct xmm_t([u8; 16]);
 
+/** ymm register repr */
 #[repr(simd)]
 #[derive(Copy, Clone)]
 struct ymm_t([u8; 32]);
 
+/** grab a new chunk of memory for an array of `Z` elements of type `X`. */
 #[inline(always)]
 pub unsafe fn new<X>(Z: usize) -> R<*mut X> {
     if unlikely(Z == 0) {
@@ -57,6 +60,7 @@ fn Alloc() {
     }
 }
 
+/** you get it. */
 #[inline(always)]
 pub unsafe fn free<X>(x: *mut X, Z: usize) {
     let lay = Layout::from_size_align(size_of::<X>() * Z, align_of::<X>())
@@ -79,6 +83,8 @@ fn current_alignment() {
 
 /**
  * `memcpy(dst(x), src(y), size(Z));`
+ *
+ * vectorized memcpy. copies `x` <- `y` over `Z` elems.
  */
 pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
     /* everything into bytes */
@@ -86,15 +92,24 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
     let mut y = y as *mut u8;
     let mut Z = Z * size_of::<X>();
 
-    /* copy a pointer $x<-$y with a size ($T) */
+    /* copy a pointer from y into x with type ($T) for the size of the move. */
     macro_rules! W {
         ($T:ty) => {{
             /* size of $T */
             const ZOF: usize = size_of::<$T>();
 
             unsafe {
+                /* convert our ptrs
+                 * mark as MaybeUninit because some things are padded
+                 * with garbage data (ie structs/enums/Option). */
+                let a = x.cast::<MaybeUninit<$T>>();
+                let b = y.cast::<MaybeUninit<$T>>();
+
+                /* grab the data from y */
+                let d = ptr::read_unaligned(b);
+
                 /* perform the write */
-                ptr::write(x.cast::<MaybeUninit<$T>>(), ptr::read_unaligned(y.cast::<MaybeUninit<$T>>()));
+                ptr::write(a, d);
 
                 /* inc the ptrs */
                 x = x.add(ZOF);
@@ -106,7 +121,8 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
         }};
     }
 
-    /* idfk what this does. thanks barrow! */
+    /* perform some initial writes so that we can perform aligned writes.
+     * thanks barrow! */
     if likely(Z >= 1) && !x.is_aligned_to(2) {
         W!(u8);
     }
