@@ -72,14 +72,7 @@ pub unsafe fn cpy<X>(x: *mut X, y: *mut X, Z: usize) {
 
     /* if we have a shit ton of bytes, we perform a bunch of writes in a row.
      * takes less iters. */
-    while likely(Z >= 128) {
-        W!(ymm_t);
-        W!(ymm_t);
-        W!(ymm_t);
-        W!(ymm_t);
-    }
-
-    if Z >= 64 {
+    while Z >= 64 {
         W!(ymm_t);
         W!(ymm_t);
     }

@@ -1,6 +1,7 @@
 use crate::{xmm_t, ymm_t};
 use std::{
     hint::{likely, unlikely},
+    intrinsics::simd::simd_splat,
     mem::size_of,
     mem::{MaybeUninit, transmute},
     ptr,
@@ -11,18 +12,20 @@ pub unsafe fn set<X>(x: *mut X, b: u8, Z: usize) {
     let mut x = x as *mut u8;
     let mut Z = Z * size_of::<X>();
 
-    /* make a big array of b we can copy out of */
-    let B = [b; 32];
+    /* copy b into each slot in a ymm_t */
+    let bymm: ymm_t = unsafe { simd_splat(b) };
+
+    /* use ptr tricks to turn bymm into all the other sized types
+     * we need later in this function */
     macro_rules! p {
-        ($t:ty) => {{ unsafe { ptr::read_unaligned(B.as_ptr() as *const $t) } }};
+        ($t:ty) => {{ unsafe { ptr::read_unaligned((&raw const bymm) as *const $t) } }};
     }
 
-    /* make various vectors out of b */
+    /* make various vectors out of bymm */
     let bu16 = p!(u16);
     let bu32 = p!(u32);
     let bu64 = p!(u64);
     let bxmm = p!(xmm_t);
-    let bymm = p!(ymm_t);
 
     macro_rules! W {
         ($T:ty => $x:expr) => {{

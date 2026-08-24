@@ -8,7 +8,9 @@ fn criterion_bench(c: &mut Criterion) {
         let x = x.unwrap();
         let N2 = format!("{N} (std)");
         c.bench_function(N, |b| b.iter(|| xxx::set(x, 0, n)));
-        c.bench_function(&N2, |b| b.iter(|| libc::memset(x as *mut libc::c_void, 0, n)));
+        c.bench_function(&N2, |b| {
+            b.iter(|| libc::memset(x as *mut libc::c_void, 0, n))
+        });
     };
 
     let small = 20;

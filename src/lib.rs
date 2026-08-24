@@ -1,6 +1,7 @@
 #![feature(likely_unlikely)]
 #![feature(repr_simd)]
 #![feature(pointer_is_aligned_to)]
+#![feature(core_intrinsics)]
 #![allow(internal_features)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
