@@ -7,6 +7,9 @@ use std::{
     ptr,
 };
 
+/**
+ * `memset(dst(x), byte(b), size(Z));`
+ */
 pub unsafe fn set<X>(x: *mut X, b: u8, Z: usize) {
     /* everything into bytes */
     let mut x = x as *mut u8;
