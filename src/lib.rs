@@ -1,7 +1,6 @@
 #![feature(likely_unlikely)]
 #![feature(repr_simd)]
 #![feature(pointer_is_aligned_to)]
-#![feature(core_intrinsics)]
 #![allow(internal_features)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
@@ -22,10 +21,6 @@ struct xmm_t([u8; 16]);
 #[repr(simd)]
 #[derive(Copy, Clone)]
 struct ymm_t([u8; 32]);
-
-#[repr(simd)]
-#[derive(Copy, Clone)]
-struct zmm_t([u8; 64]);
 
 #[inline(always)]
 pub unsafe fn new<X>(Z: usize) -> R<*mut X> {
@@ -336,5 +331,28 @@ fn Cpy_16_4() {
 
         free(x, 5);
         free(y, 5);
+    }
+}
+
+#[test]
+fn Cpy_struct_repr_c() {
+    #[repr(C)]
+    #[derive(Copy, Clone, PartialEq, Debug)]
+    struct A(u8, u32);
+
+    unsafe {
+        let x = new(2).unwrap();
+        let y = new(2).unwrap();
+
+        *x = A(0, 0);
+        *x.add(1) = A(1, 1);
+
+        cpy(y, x, 2);
+
+        assert_eq!(*x, *y);
+        assert_eq!(*x.add(1), *y.add(1));
+
+        free(x, 2);
+        free(y, 2);
     }
 }
