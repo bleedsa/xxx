@@ -1,5 +1,7 @@
+#![allow(non_snake_case)]
+
 use criterion::{Criterion, criterion_group, criterion_main};
-use std::{hint::black_box, ptr};
+use std::ptr;
 use xxx;
 
 fn iota(x: usize) -> *mut usize {
