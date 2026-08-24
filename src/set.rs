@@ -11,17 +11,18 @@ pub unsafe fn set<X>(x: *mut X, b: u8, Z: usize) {
     let mut x = x as *mut u8;
     let mut Z = Z * size_of::<X>();
 
+    /* make a big array of b we can copy out of */
+    let B = [b; 32];
+    macro_rules! p {
+        ($t:ty) => {{ unsafe { ptr::read_unaligned(B.as_ptr() as *const $t) } }};
+    }
+
     /* make various vectors out of b */
-    let bu16: u16 =
-        unsafe { ptr::read_unaligned([b, b].as_ptr() as *const u16) };
-    let bu32: u32 =
-        unsafe { ptr::read_unaligned([bu16, bu16].as_ptr() as *const u32) };
-    let bu64: u64 =
-        unsafe { ptr::read_unaligned([bu32, bu32].as_ptr() as *const u64) };
-    let bxmm: xmm_t =
-        unsafe { ptr::read_unaligned([bu64, bu64].as_ptr() as *const xmm_t) };
-    let bymm: ymm_t =
-        unsafe { ptr::read_unaligned([bxmm, bxmm].as_ptr() as *const ymm_t) };
+    let bu16 = p!(u16);
+    let bu32 = p!(u32);
+    let bu64 = p!(u64);
+    let bxmm = p!(xmm_t);
+    let bymm = p!(ymm_t);
 
     macro_rules! W {
         ($T:ty => $x:expr) => {{
@@ -105,6 +106,26 @@ fn Set_padded_mem() {
 
         for i in 0..n {
             assert_eq!(*x.add(i), (0, 0, 0));
+        }
+
+        free(x, n);
+    }
+}
+
+#[test]
+fn Set_struct_mem() {
+    #[derive(Debug, PartialEq)]
+    struct A(u8, u16);
+
+    unsafe {
+        let n = 20;
+        let x: *mut A = new(n).unwrap();
+        let b = 0b11111111;
+
+        set(x, b, n);
+
+        for i in 0..n {
+            assert_eq!(*x.add(i), A(0b11111111, 0b1111111111111111));
         }
 
         free(x, n);
