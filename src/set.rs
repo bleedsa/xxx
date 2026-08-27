@@ -30,6 +30,7 @@ pub unsafe fn set<X>(x: *mut X, b: u8, Z: usize) {
     let bu64 = p!(u64);
     let bxmm = p!(xmm_t);
 
+    /* write a value $x of type $T into the ptr x */
     macro_rules! W {
         ($T:ty => $x:expr) => {{
             const ZOF: usize = size_of::<$T>();
