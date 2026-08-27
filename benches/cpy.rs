@@ -21,7 +21,9 @@ fn criterion_bench(c: &mut Criterion) {
         let y = y.unwrap();
         let N2 = format!("{N} (std)");
         c.bench_function(N, |b| b.iter(|| xxx::cpy(y, x, n)));
-        c.bench_function(&N2, |b| b.iter(|| std::ptr::copy(y, x, n)));
+        c.bench_function(&N2, |b| {
+            b.iter(|| std::ptr::copy_nonoverlapping(y, x, n))
+        });
     };
 
     let small = 20;
@@ -39,11 +41,13 @@ fn criterion_bench(c: &mut Criterion) {
     unsafe {
         let x: *mut u64 = xxx::new(huge).unwrap();
         let y = iota(huge);
-        c.bench_function("naive loop", |b| b.iter(|| {
-            for i in 0..huge * 8 {
-                *x.cast::<u8>().add(i) = *y.cast::<u8>().add(i);
-            }
-        }));
+        c.bench_function("naive loop", |b| {
+            b.iter(|| {
+                for i in 0..huge * 8 {
+                    *x.cast::<u8>().add(i) = *y.cast::<u8>().add(i);
+                }
+            })
+        });
     }
 }
 
