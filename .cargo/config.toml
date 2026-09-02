@@ -1,2 +1,5 @@
 [build]
 rustflags = ["-C", "target-feature=+avx"]
+
+[profile.release]
+rustflags = ["-C", "target-cpu=native"]
